@@ -68,7 +68,8 @@ com.seuprojeto
 
 4. Execute com Maven:
     ```bash
-    ./mvnw spring-boot:run
+    mvn clean install
+    mvn spring-boot:run
     ```
 
 ---
