@@ -44,6 +44,7 @@ com.seuprojeto
 ├── service         # Regras de negócio
 ├── session         # Carrinho de compras em sessão
 └── Application.java
+```
 
 ## ▶️ Como executar
 
