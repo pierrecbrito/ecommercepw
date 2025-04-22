@@ -50,11 +50,12 @@ com.seuprojeto
 
 1. Clone o repositório:
     ```bash
-    git clone https://github.com/seu-usuario/loja-online.git
-    cd loja-online
+    git clone https://github.com/pierrecbrito/ecommercepw.git
+    cd ecommercepw
     ```
+2. Vá em /src/main/resources/application.properties.template e copie o arquivo sem o ".template".
 
-2. Configure o banco de dados no `src/main/resources/application.properties` com os dados do seu PostgreSQL:
+3. Configure o banco de dados no `src/main/resources/application.properties` com os dados do seu PostgreSQL:
     ```properties
     spring.datasource.url=jdbc:postgresql://localhost:5432/loja
     spring.datasource.username=seu_usuario
@@ -65,7 +66,7 @@ com.seuprojeto
     spring.jpa.show-sql=true
     ```
 
-3. Execute com Maven:
+4. Execute com Maven:
     ```bash
     ./mvnw spring-boot:run
     ```
