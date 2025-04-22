@@ -66,7 +66,7 @@ com.seuprojeto
     spring.jpa.show-sql=true
     ```
 
-4. Execute com Maven:
+4. Instale a dependência e execute com Maven:
     ```bash
     mvn clean install
     mvn spring-boot:run
