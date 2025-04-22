@@ -44,3 +44,42 @@ com.seuprojeto
 ├── service         # Regras de negócio
 ├── session         # Carrinho de compras em sessão
 └── Application.java
+
+## ▶️ Como executar
+
+1. Clone o repositório:
+    ```bash
+    git clone https://github.com/seu-usuario/loja-online.git
+    cd loja-online
+    ```
+
+2. Configure o banco de dados no `src/main/resources/application.properties` com os dados do seu PostgreSQL:
+    ```properties
+    spring.datasource.url=jdbc:postgresql://localhost:5432/loja
+    spring.datasource.username=seu_usuario
+    spring.datasource.password=sua_senha
+    spring.datasource.driver-class-name=org.postgresql.Driver
+    spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+    spring.jpa.hibernate.ddl-auto=update
+    spring.jpa.show-sql=true
+    ```
+
+3. Execute com Maven:
+    ```bash
+    ./mvnw spring-boot:run
+    ```
+
+---
+
+## 👨‍🏫 Equipe
+
+- Aluno 1 – Pierre Brito
+- Aluno 2 – Ayron Matos
+
+---
+
+## 📌 Observações
+
+- O carrinho é armazenado na sessão HTTP com duração de 20 minutos.
+- O estoque dos produtos só é alterado no momento da finalização da compra.
+- Não há arquivos `.html` estáticos. Todo conteúdo é gerado por `PrintWriter`.
