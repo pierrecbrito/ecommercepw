@@ -52,7 +52,6 @@ public class LoginController {
             HttpServletResponse response) throws IOException {
         HttpSession session = request.getSession();
         
-        // Verifica se é um cliente
         Optional<Cliente> cliente = clienteService.buscarPorEmail(email);
         if (cliente.isPresent() && cliente.get().getSenha().equals(senha)) {
             session.setAttribute("usuarioLogado", cliente.get());
@@ -61,7 +60,6 @@ public class LoginController {
             return;
         }
         
-        // Verifica se é um lojista
         Optional<Lojista> lojista = lojistaService.buscarPorEmail(email);
         if (lojista.isPresent() && lojista.get().getSenha().equals(senha)) {
             session.setAttribute("usuarioLogado", lojista.get());
@@ -70,7 +68,6 @@ public class LoginController {
             return;
         }
         
-        // Login inválido
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
         
