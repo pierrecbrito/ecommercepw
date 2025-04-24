@@ -1,33 +1,23 @@
 package br.edu.ufrn.tads.ecommercepw.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 
 @Entity
 @Table(name = "produtos")
 public class Produto {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    
     private String nome;
-
     private String descricao;
-
     private double preco;
-
-    private int quantidade; // estoque
-
-    public Produto() {
-    }
-
-    public Produto(String nome, String descricao, double preco, int quantidade) {
-        this.nome = nome;
-        this.descricao = descricao;
-        this.preco = preco;
-        this.quantidade = quantidade;
-    }
-
+    private int estoque;
+    
     public Long getId() {
         return id;
     }
@@ -60,20 +50,27 @@ public class Produto {
         this.preco = preco;
     }
 
-    public int getQuantidade() {
-        return quantidade;
+    public int getEstoque() {
+        return estoque;
     }
 
-    public void setQuantidade(int quantidade) {
-        this.quantidade = quantidade;
+    public void setEstoque(int estoque) {
+        this.estoque = estoque;
+    }
+    
+    public void incrementaEstoque() {
+        this.estoque++;
     }
 
-    public void diminuiEstoque(int quantidadeComprada) {
-        this.quantidade -= quantidadeComprada;
+    public void diminuiEstoque() {
+        if(this.estoque > 0) {
+            this.estoque--;
+        }
     }
-
-    public void incrementaEstoque(int quantidade) {
-        this.quantidade += quantidade;
+    
+    public void diminuiEstoque(int quantidade) {
+        if(this.estoque >= quantidade) {
+            this.estoque -= quantidade;
+        }
     }
 }
-
