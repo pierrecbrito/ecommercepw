@@ -1,25 +1,23 @@
 package br.edu.ufrn.tads.ecommercepw.model;
 
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-
-@MappedSuperclass
-public abstract class Usuario {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class Usuario {
     private Long id;
-    
     private String nome;
-    
-    @Column(unique = true)
     private String email;
-    
     private String senha;
+    private String tipo; // "CLIENTE" ou "LOJISTA"
     
-    // Getters e Setters
+    public Usuario() {
+    }
+    
+    public Usuario(Long id, String nome, String email, String senha, String tipo) {
+        this.id = id;
+        this.nome = nome;
+        this.email = email;
+        this.senha = senha;
+        this.tipo = tipo;
+    }
+    
     public Long getId() {
         return id;
     }
@@ -50,5 +48,21 @@ public abstract class Usuario {
 
     public void setSenha(String senha) {
         this.senha = senha;
+    }
+    
+    public String getTipo() {
+        return tipo;
+    }
+    
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+    
+    public boolean isLojista() {
+        return "LOJISTA".equals(this.tipo);
+    }
+    
+    public boolean isCliente() {
+        return "CLIENTE".equals(this.tipo);
     }
 }
