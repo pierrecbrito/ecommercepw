@@ -1,6 +1,7 @@
 package br.edu.ufrn.tads.ecommercepw.controller;
 
 import br.edu.ufrn.tads.ecommercepw.dao.UsuarioDAO;
+import br.edu.ufrn.tads.ecommercepw.model.Carrinho;
 import br.edu.ufrn.tads.ecommercepw.model.Usuario;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -132,8 +133,11 @@ public class UsuarioController {
             
             if (usuario.getSenha().equals(senha)) {
                 HttpSession session = request.getSession(true);
+                session.setMaxInactiveInterval(20*60);
                 session.setAttribute("usuario", usuario);
                 session.setAttribute("usuarioNome", usuario.getNome());
+                Carrinho carrinho = new Carrinho();
+                session.setAttribute("carrinho", carrinho);
                 
                 response.sendRedirect("/produtos");
                 return;

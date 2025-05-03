@@ -1,6 +1,5 @@
 package br.edu.ufrn.tads.ecommercepw.controller;
 
-import br.edu.ufrn.tads.ecommercepw.dao.CarrinhoDAO;
 import br.edu.ufrn.tads.ecommercepw.dao.ProdutoDAO;
 import br.edu.ufrn.tads.ecommercepw.model.Carrinho;
 import br.edu.ufrn.tads.ecommercepw.model.Produto;
@@ -19,21 +18,13 @@ import java.util.Optional;
 @Controller
 public class CarrinhoController {
     
-    private final CarrinhoDAO carrinhoDAO = new CarrinhoDAO();
     private final ProdutoDAO produtoDAO = new ProdutoDAO();
     
     @RequestMapping("/cliente/carrinho")
     public void visualizarCarrinho(HttpServletRequest request, HttpServletResponse response) throws IOException {
         HttpSession session = request.getSession(false);
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-
-        Long usuarioId = (Long) usuario.getId();
-        Optional<Carrinho> optCarrinho = carrinhoDAO.buscarPorUsuario(usuarioId);
-        Carrinho carrinho = optCarrinho.orElseGet(() -> {
-            Carrinho novoCarrinho = new Carrinho();
-            novoCarrinho.setUsuarioId(usuarioId);
-            return novoCarrinho;
-        });
+        
+        Carrinho carrinho = (Carrinho) session.getAttribute("carrinho");
         
         response.setContentType("text/html;charset=UTF-8");
         StringBuilder html = new StringBuilder();
@@ -57,10 +48,15 @@ public class CarrinhoController {
             .append(".total { font-weight: bold; margin: 20px 0; font-size: 18px; }")
             .append(".empty-cart { margin: 20px 0; color: #777; }")
             .append(".quantity-input { width: 50px; text-align: center; }")
+            .append(".alert { padding: 15px; margin-bottom: 20px; border-radius: 4px; }")
+            .append(".alert-success { background-color: #dff0d8; color: #3c763d; }")
+            .append(".alert-danger { background-color: #f2dede; color: #a94442; }")
             .append("</style>")
             .append("</head>")
             .append("<body>")
             .append("<h1>Carrinho de Compras</h1>");
+        
+    
         
         if (carrinho.getItens().isEmpty()) {
             html.append("<p class='empty-cart'>Seu carrinho está vazio!</p>");
@@ -99,10 +95,12 @@ public class CarrinhoController {
             
             html.append("</table>")
                 .append("<p class='total'>Total: R$ ").append(String.format("%.2f", totalCarrinho)).append("</p>")
-                .append("<a href='/cliente/carrinho/finalizar' class='btn btn-checkout'>Finalizar Compra</a>");
+                .append("<form action='/cliente/carrinho/finalizar' method='post' style='margin-bottom: 20px;'>")
+                .append("<button type='submit' class='btn btn-checkout'>Finalizar Compra</button>")
+                .append("</form>");
         }
         
-        html.append("<p><a href='/produtos' class='btn btn-shop'>Continuar Comprando</a></p>")
+        html.append("<a href='/produtos' class='btn btn-shop'>Continuar Comprando</a>")
             .append("</body>")
             .append("</html>");
         
@@ -111,47 +109,37 @@ public class CarrinhoController {
     
     @RequestMapping("/cliente/carrinho/adicionar")
     public void adicionarItem(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        HttpSession session = request.getSession(false);
         String produtoIdStr = request.getParameter("produtoId");
         String quantidadeStr = request.getParameter("quantidade");
-        
-        if (produtoIdStr == null || quantidadeStr == null) {
-            response.sendRedirect("/produtos");
-            return;
-        }
         
         try {
             Long produtoId = Long.parseLong(produtoIdStr);
             int quantidade = Integer.parseInt(quantidadeStr);
-            Long usuarioId = (Long) ((Usuario) session.getAttribute("usuario")).getId();
             
-            if (quantidade <= 0) {
-                response.sendRedirect("/produtos");
-                return;
+            HttpSession session = request.getSession(true);
+            
+            Carrinho carrinho = (Carrinho) session.getAttribute("carrinho");
+            if (carrinho == null) {
+                carrinho = new Carrinho();
+                if (session.getAttribute("usuario") != null) {
+                    Usuario usuario = (Usuario) session.getAttribute("usuario");
+                    carrinho.setUsuarioId(usuario.getId());
+                }
             }
             
-            // Verificar estoque
-            Optional<Produto> optProduto = produtoDAO.buscarPorId(produtoId);
-            if (optProduto.isEmpty() || optProduto.get().getEstoque() < quantidade) {
-                response.sendRedirect("/produtos");
-                return;
+            if (carrinho.getItens().containsKey(produtoId)) {
+                int quantidadeAtual = carrinho.getItens().get(produtoId);
+                int novaQuantidade = quantidadeAtual + quantidade;
+                
+                carrinho.atualizarQuantidade(produtoId, novaQuantidade);
+            } else {
+                carrinho.adicionarItem(produtoId, quantidade);
             }
             
-            // Buscar ou criar carrinho
-            Optional<Carrinho> optCarrinho = carrinhoDAO.buscarPorUsuario(usuarioId);
-            Carrinho carrinho = optCarrinho.orElseGet(() -> {
-                Carrinho novoCarrinho = new Carrinho();
-                novoCarrinho.setUsuarioId(usuarioId);
-                return novoCarrinho;
-            });
-            
-            // Adicionar item
-            carrinho.adicionarItem(produtoId, quantidade);
-            
-            // Salvar carrinho
-            carrinhoDAO.salvar(carrinho);
+            session.setAttribute("carrinho", carrinho);
             
             response.sendRedirect("/cliente/carrinho");
+            
         } catch (NumberFormatException e) {
             response.sendRedirect("/produtos");
         }
@@ -163,36 +151,25 @@ public class CarrinhoController {
         
         String produtoIdStr = request.getParameter("produtoId");
         String quantidadeStr = request.getParameter("quantidade");
-        
-        if (produtoIdStr == null || quantidadeStr == null) {
-            response.sendRedirect("/cliente/carrinho");
-            return;
-        }
-        
+
         try {
             Long produtoId = Long.parseLong(produtoIdStr);
             int quantidade = Integer.parseInt(quantidadeStr);
-            Long usuarioId = (Long) ((Usuario) session.getAttribute("usuario")).getId();
             
             if (quantidade <= 0) {
                 response.sendRedirect("/cliente/carrinho/remover?produtoId=" + produtoId);
                 return;
             }
             
-            // Verificar estoque
             Optional<Produto> optProduto = produtoDAO.buscarPorId(produtoId);
             if (optProduto.isEmpty() || optProduto.get().getEstoque() < quantidade) {
                 response.sendRedirect("/cliente/carrinho");
                 return;
             }
-            
-            // Buscar carrinho
-            Optional<Carrinho> optCarrinho = carrinhoDAO.buscarPorUsuario(usuarioId);
-            if (optCarrinho.isPresent()) {
-                Carrinho carrinho = optCarrinho.get();
-                carrinho.atualizarQuantidade(produtoId, quantidade);
-                carrinhoDAO.salvar(carrinho);
-            }
+    
+            Carrinho carrinho = (Carrinho) session.getAttribute("carrinho");
+            carrinho.atualizarQuantidade(produtoId, quantidade);
+            session.setAttribute("carrinho", carrinho);
             
             response.sendRedirect("/cliente/carrinho");
         } catch (NumberFormatException e) {
@@ -206,21 +183,12 @@ public class CarrinhoController {
         
         String produtoIdStr = request.getParameter("produtoId");
         
-        if (produtoIdStr == null) {
-            response.sendRedirect("/cliente/carrinho");
-            return;
-        }
-        
         try {
             Long produtoId = Long.parseLong(produtoIdStr);
-            Long usuarioId = (Long) ((Usuario) session.getAttribute("usuario")).getId();
             
-            Optional<Carrinho> optCarrinho = carrinhoDAO.buscarPorUsuario(usuarioId);
-            if (optCarrinho.isPresent()) {
-                Carrinho carrinho = optCarrinho.get();
-                carrinho.removerItem(produtoId);
-                carrinhoDAO.salvar(carrinho);
-            }
+            Carrinho carrinho = (Carrinho) session.getAttribute("carrinho");
+            carrinho.removerItem(produtoId);
+            session.setAttribute("carrinho", carrinho);
             
             response.sendRedirect("/cliente/carrinho");
         } catch (NumberFormatException e) {
@@ -232,59 +200,77 @@ public class CarrinhoController {
     public void finalizarCompra(HttpServletRequest request, HttpServletResponse response) throws IOException {
         HttpSession session = request.getSession(false);
         
-        Long usuarioId = (Long) ((Usuario) session.getAttribute("usuario")).getId();
+        Carrinho carrinho = (Carrinho) session.getAttribute("carrinho");
         
-        Optional<Carrinho> optCarrinho = carrinhoDAO.buscarPorUsuario(usuarioId);
-        if (optCarrinho.isPresent()) {
-            Carrinho carrinho = optCarrinho.get();
+        if (carrinho.getItens().isEmpty()) {
+            response.sendRedirect("/cliente/carrinho");
+            return;
+        }
+        
+        boolean estoqueDisponivel = true;
+        StringBuilder mensagemErro = new StringBuilder("Produtos sem estoque suficiente: ");
+        boolean temErro = false;
+        
+        for (Map.Entry<Long, Integer> item : carrinho.getItens().entrySet()) {
+            Long produtoId = item.getKey();
+            int quantidade = item.getValue();
             
-            if (carrinho.getItens().isEmpty()) {
-                response.sendRedirect("/carrinho");
-                return;
-            }
-            
-            boolean sucesso = true;
-            for (Map.Entry<Long, Integer> item : carrinho.getItens().entrySet()) {
-                Long produtoId = item.getKey();
-                int quantidade = item.getValue();
-                
-                if (!produtoDAO.atualizarEstoque(produtoId, quantidade)) {
-                    sucesso = false;
-                    break;
+            Optional<Produto> optProduto = produtoDAO.buscarPorId(produtoId);
+            if (optProduto.isEmpty() || optProduto.get().getEstoque() < quantidade) {
+                estoqueDisponivel = false;
+                if (optProduto.isPresent()) {
+                    if (temErro) mensagemErro.append(", ");
+                    mensagemErro.append(optProduto.get().getNome());
+                    temErro = true;
                 }
-            }
-            
-            if (sucesso) {
-                carrinhoDAO.limparCarrinho(usuarioId);
-                
-                response.setContentType("text/html;charset=UTF-8");
-                StringBuilder html = new StringBuilder();
-                
-                html.append("<!DOCTYPE html>")
-                    .append("<html>")
-                    .append("<head>")
-                    .append("<title>Compra Finalizada</title>")
-                    .append("<style>")
-                    .append("body { font-family: Arial, sans-serif; margin: 0; padding: 20px; text-align: center; }")
-                    .append("h1 { color: #04AA6D; }")
-                    .append(".message { margin: 20px 0; }")
-                    .append(".btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; color: white; text-decoration: none; }")
-                    .append(".btn-home { background-color: #2196F3; }")
-                    .append("</style>")
-                    .append("</head>")
-                    .append("<body>")
-                    .append("<h1>Compra Finalizada com Sucesso!</h1>")
-                    .append("<p class='message'>Sua compra foi processada com sucesso. Obrigado por comprar conosco!</p>")
-                    .append("<a href='/produtos' class='btn btn-home'>Voltar para a Loja</a>")
-                    .append("</body>")
-                    .append("</html>");
-                
-                response.getWriter().write(html.toString());
-                return;
             }
         }
         
-        // Em caso de erro
-        response.sendRedirect("/cliente/carrinho?error=1");
+        if (!estoqueDisponivel) {
+            response.sendRedirect("/cliente/carrinho");
+            return;
+        }
+        
+        boolean sucesso = true;
+        for (Map.Entry<Long, Integer> item : carrinho.getItens().entrySet()) {
+            Long produtoId = item.getKey();
+            int quantidade = item.getValue();
+            
+            if (!produtoDAO.atualizarEstoque(produtoId, quantidade)) {
+                sucesso = false;
+                break;
+            }
+        }
+        
+        if (sucesso) {
+            carrinho.limpar();
+            session.setAttribute("carrinho", carrinho);
+            
+            response.setContentType("text/html;charset=UTF-8");
+            StringBuilder html = new StringBuilder();
+            
+            html.append("<!DOCTYPE html>")
+                .append("<html>")
+                .append("<head>")
+                .append("<title>Compra Finalizada</title>")
+                .append("<style>")
+                .append("body { font-family: Arial, sans-serif; margin: 0; padding: 20px; text-align: center; }")
+                .append("h1 { color: #04AA6D; }")
+                .append(".message { margin: 20px 0; }")
+                .append(".btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; color: white; text-decoration: none; }")
+                .append(".btn-home { background-color: #2196F3; display: inline-block; margin-top: 20px; }")
+                .append("</style>")
+                .append("</head>")
+                .append("<body>")
+                .append("<h1>Compra Finalizada com Sucesso!</h1>")
+                .append("<p class='message'>Sua compra foi processada com sucesso. Obrigado por comprar conosco!</p>")
+                .append("<a href='/produtos' class='btn btn-home'>Voltar para a Loja</a>")
+                .append("</body>")
+                .append("</html>");
+            
+            response.getWriter().write(html.toString());
+        } else {
+            response.sendRedirect("/cliente/carrinho");
+        }
     }
 }

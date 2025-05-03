@@ -22,17 +22,18 @@ public class ProdutoController {
     public void listarProdutos(HttpServletRequest request, HttpServletResponse response) throws IOException {
         List<Produto> produtos = produtoDAO.listarTodos();
         
-        // Verificar o tipo de usuário logado
-        HttpSession session = request.getSession(false);
         boolean isLojista = false;
         boolean isCliente = false;
         boolean isLogado = false;
-        
-        if (session != null && session.getAttribute("usuario") != null) {
+
+        HttpSession session = request.getSession(false);
+        if (session != null) {
             Usuario usuario = (Usuario) session.getAttribute("usuario");
-            isLojista = usuario.isLojista();
-            isCliente = !usuario.isLojista(); // se não é lojista, é cliente
-            isLogado = true;
+            if (usuario != null) {
+                isLogado = true;
+                isLojista = usuario.isLojista();
+                isCliente = usuario.isCliente();
+            }
         }
         
         response.setContentType("text/html;charset=UTF-8");
@@ -61,7 +62,6 @@ public class ProdutoController {
             .append("</style>")
             .append("</head>")
             .append("<body>")
-            // Barra de navegação
             .append("<div class='nav'>")
             .append("<h1>Lista de Produtos</h1>")
             .append("<div class='nav-links'>");
@@ -76,18 +76,16 @@ public class ProdutoController {
                 .append("<a href='/cadastro' class='nav-link'>Cadastrar</a>");
         }
         
-        html.append("</div>") // fechando div nav-links
-            .append("</div>"); // fechando div nav
+        html.append("</div>") 
+            .append("</div>"); 
         
-        // Mostrar botão de adicionar produto apenas para lojistas
         if (isLojista) {
-            html.append("<a href='/lojista/produtos/novo' class='btn btn-add'>Novo Produto</a>");
+            html.append("<a href='/lojista/novo-produto' class='btn btn-add'>Novo Produto</a>");
         }
         
-        html.append("<table>")
+        html.append("<table style='margin-top: 10px;'>")
             .append("<tr><th>ID</th><th>Nome</th><th>Descrição</th><th>Preço</th><th>Estoque</th>");
         
-        // Coluna de ações só é mostrada se o usuário estiver logado
         if (isLogado) {
             html.append("<th>Ações</th>");
         }
@@ -102,21 +100,19 @@ public class ProdutoController {
                 .append("<td>R$ ").append(String.format("%.2f", produto.getPreco())).append("</td>")
                 .append("<td>").append(produto.getEstoque()).append("</td>");
             
-            // Adicionar coluna de ações apenas se o usuário estiver logado
+
             if (isLogado) {
                 html.append("<td class='actions'>");
                 
-                // Apenas clientes podem adicionar ao carrinho
                 if (isCliente) {
                     html.append("<a href='/cliente/carrinho/adicionar?quantidade=1&produtoId=").append(produto.getId())
                         .append("' class='btn btn-add'>Adicionar ao carrinho</a>");
                 }
                 
-                // Apenas lojistas podem editar e excluir
                 if (isLojista) {
-                    html.append("<a href='/lojista/produtos/editar?id=").append(produto.getId())
+                    html.append("<a href='/lojista/editar-produto?id=").append(produto.getId())
                         .append("' class='btn btn-edit'>Editar</a>")
-                        .append("<a href='/lojista/produtos/excluir?id=").append(produto.getId())
+                        .append("<a href='/lojista/excluir-produto?id=").append(produto.getId())
                         .append("' class='btn btn-delete'>Excluir</a>");
                 }
                 
@@ -126,9 +122,14 @@ public class ProdutoController {
             html.append("</tr>");
         }
         
-        html.append("</table>")
-            .append("</body>")
-            .append("</html>");
+        html.append("</table>");
+
+        if(isLogado) {
+            html.append("<p>").append("Olá, " + (request.getSession(false).getAttribute("usuarioNome"))).append("</p>");
+        }
+
+        html.append("</body>")
+        .append("</html>");
         
         response.getWriter().write(html.toString());
     }
@@ -157,7 +158,7 @@ public class ProdutoController {
             .append("</head>")
             .append("<body>")
             .append("<h1>Novo Produto</h1>")
-            .append("<form action='/lojista/produtos/salvar' method='post'>")
+            .append("<form action='/lojista/salvar-produto' method='post'>")
             .append("<div class='form-group'>")
             .append("<label for='nome'>Nome:</label>")
             .append("<input type='text' id='nome' name='nome' required>")
@@ -225,7 +226,7 @@ public class ProdutoController {
                 .append("</head>")
                 .append("<body>")
                 .append("<h1>Editar Produto</h1>")
-                .append("<form action='/lojista/produtos/atualizar' method='post'>")
+                .append("<form action='/lojista/atualizar-produto' method='post'>")
                 .append("<input type='hidden' name='id' value='").append(produto.getId()).append("'>")
                 .append("<div class='form-group'>")
                 .append("<label for='nome'>Nome:</label>")
@@ -330,7 +331,6 @@ public class ProdutoController {
                 Long id = Long.parseLong(idStr);
                 produtoDAO.excluir(id);
             } catch (NumberFormatException e) {
-                // Ignore
             }
         }
         

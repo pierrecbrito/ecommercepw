@@ -14,31 +14,13 @@ CREATE TABLE produtos (
     estoque INT NOT NULL DEFAULT 0
 );
 
-CREATE TABLE carrinhos (
-    id SERIAL PRIMARY KEY,
-    usuario_id BIGINT NOT NULL UNIQUE,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
-);
-
-CREATE TABLE carrinho_itens (
-    id SERIAL PRIMARY KEY,
-    carrinho_id BIGINT NOT NULL,
-    produto_id BIGINT NOT NULL,
-    quantidade INT NOT NULL,
-    FOREIGN KEY (carrinho_id) REFERENCES carrinhos (id),
-    FOREIGN KEY (produto_id) REFERENCES produtos (id),
-    UNIQUE (carrinho_id, produto_id)
-);
-
--- Popular tabela de usuários
 INSERT INTO usuarios (nome, email, senha, tipo) VALUES
-('Admin User', 'admin@example.com', 'admin123', 'LOJISTA'),
-('João Silva', 'joao@example.com', 'senha123', 'CLIENTE'),
-('Maria Santos', 'maria@example.com', 'senha456', 'CLIENTE'),
-('Pedro Oliveira', 'pedro@example.com', 'senha789', 'CLIENTE'),
-('Ana Souza', 'ana@example.com', 'senha321', 'CLIENTE');
+('Admin User', 'admin@gmail.com', 'admin123', 'LOJISTA'),
+('João Silva', 'joao@gmail.com', 'senha123', 'CLIENTE'),
+('Maria Santos', 'maria@gmail.com', 'senha456', 'CLIENTE'),
+('Pedro Oliveira', 'pedro@gmail.com', 'senha789', 'CLIENTE'),
+('Ana Souza', 'ana@gmail', 'senha321', 'CLIENTE');
 
--- Popular tabela de produtos
 INSERT INTO produtos (nome, descricao, preco, estoque) VALUES
 ('Smartphone Galaxy S23', 'Smartphone Samsung com 256GB de armazenamento', 3999.99, 50),
 ('iPhone 15', 'Apple iPhone com tela Super Retina XDR', 5999.99, 30),
@@ -51,41 +33,3 @@ INSERT INTO produtos (nome, descricao, preco, estoque) VALUES
 ('Cadeira Gamer', 'Cadeira ergonômica com ajuste de altura e encosto reclinável', 950.00, 20),
 ('Webcam HD', 'Webcam com resolução 1080p e microfone integrado', 220.00, 35);
 
--- Criar carrinhos para os usuários
-INSERT INTO carrinhos (usuario_id)
-SELECT id FROM usuarios;
-
--- Adicionar itens aos carrinhos
--- Carrinho do João
-INSERT INTO carrinho_itens (carrinho_id, produto_id, quantidade)
-VALUES 
-((SELECT id FROM carrinhos WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'joao@example.com')), 
- (SELECT id FROM produtos WHERE nome = 'Smartphone Galaxy S23'), 1),
-((SELECT id FROM carrinhos WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'joao@example.com')), 
- (SELECT id FROM produtos WHERE nome = 'Headphone Bluetooth'), 1);
-
--- Carrinho da Maria
-INSERT INTO carrinho_itens (carrinho_id, produto_id, quantidade)
-VALUES 
-((SELECT id FROM carrinhos WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'maria@example.com')), 
- (SELECT id FROM produtos WHERE nome = 'iPhone 15'), 1),
-((SELECT id FROM carrinhos WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'maria@example.com')), 
- (SELECT id FROM produtos WHERE nome = 'SSD 1TB'), 2);
-
--- Carrinho do Pedro
-INSERT INTO carrinho_itens (carrinho_id, produto_id, quantidade)
-VALUES 
-((SELECT id FROM carrinhos WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'pedro@example.com')), 
- (SELECT id FROM produtos WHERE nome = 'Notebook Lenovo'), 1),
-((SELECT id FROM carrinhos WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'pedro@example.com')), 
- (SELECT id FROM produtos WHERE nome = 'Mouse Gamer'), 1),
-((SELECT id FROM carrinhos WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'pedro@example.com')), 
- (SELECT id FROM produtos WHERE nome = 'Teclado Mecânico'), 1);
-
--- Carrinho da Ana
-INSERT INTO carrinho_itens (carrinho_id, produto_id, quantidade)
-VALUES 
-((SELECT id FROM carrinhos WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'ana@example.com')), 
- (SELECT id FROM produtos WHERE nome = 'Cadeira Gamer'), 1),
-((SELECT id FROM carrinhos WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'ana@example.com')), 
- (SELECT id FROM produtos WHERE nome = 'Webcam HD'), 1);

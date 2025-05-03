@@ -4,9 +4,6 @@ import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.*;
 import br.edu.ufrn.tads.ecommercepw.model.Usuario;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 
 @WebFilter(urlPatterns = {"/lojista/*", "/cliente/*"})
