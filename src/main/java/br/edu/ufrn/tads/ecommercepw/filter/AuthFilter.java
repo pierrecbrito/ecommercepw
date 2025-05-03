@@ -30,14 +30,13 @@ public class AuthFilter implements Filter {
             return;
         }
         
-
-        if(requestURI.contains("/lojista/") && !usuario.isLojista()) {
-            response.sendRedirect("localhost:8080/acesso-negado");
+        if(requestURI.contains("lojista") && !usuario.isLojista()) {
+            response.sendRedirect("http://localhost:8080/acesso-negado");
             return;
         }
 
-        if(requestURI.contains("/cliente/") && usuario.isLojista()) {
-            response.sendRedirect("localhost:8080/acesso-negado");
+        if(requestURI.contains("cliente") && !usuario.isCliente()) {
+            response.sendRedirect("http://localhost:8080/acesso-negado");
             return;
         }
 
